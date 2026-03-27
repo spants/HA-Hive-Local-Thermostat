@@ -26,7 +26,7 @@ Actions are provided to natively boost the Heating `hive_local_thermostat.boost_
 
 There are also matching actions to cancel the native boost for Heating `hive_local_thermostat.cancel_boost_heating` and Water `hive_local_thermostat.cancel_boost_water` (SLR2 only), these actions will return the heating/water back to the state they were before the boost.
 
-![Hive Screenshot](https://raw.githubusercontent.com/andrew-codechimp/HA-Hive-Local-Thermostat/main/images/screenshot.png "Hive Controls")
+![Hive Screenshot](https://raw.githubusercontent.com/spants/HA-Hive-Local-Thermostat/main/images/screenshot.png "Hive Controls")
 
 This project is not endorsed by, directly affiliated with, maintained, authorized, or sponsored by Hive.
 
@@ -34,8 +34,7 @@ This project is not endorsed by, directly affiliated with, maintained, authorize
 
 ### HACS
 
-## Note to self: the link below opens the original - do not use
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=andrew-codechimp&repository=HA-Hive-Local-Thermostat&category=Integration)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=spants&repository=HA-Hive-Local-Thermostat&category=Integration)
 
 Restart Home Assistant
 
@@ -100,13 +99,13 @@ The presets provide the facility to boost the heating. Selecting Boost will trig
   - Turn on the Pre-release toggle
   - HACS will now show updates available for pre-releases if there are any
 
-[commits-shield]: https://img.shields.io/github/commit-activity/y/andrew-codechimp/HA-Hive-Local-Thermostat.svg?style=for-the-badge
-[commits]: https://github.com/andrew-codechimp/HA-Hive-Local-Thermostat/commits/main
+[commits-shield]: https://img.shields.io/github/commit-activity/y/spants/HA-Hive-Local-Thermostat.svg?style=for-the-badge
+[commits]: https://github.com/spants/HA-Hive-Local-Thermostat/commits/main
 [hacs]: https://github.com/hacs/integration
 [hacsbadge]: https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge
 [exampleimg]: example.png
-[license-shield]: https://img.shields.io/github/license/andrew-codechimp/HA-Hive-Local-Thermostat.svg?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/andrew-codechimp/HA-Hive-Local-Thermostat.svg?style=for-the-badge
-[releases]: https://github.com/andrew-codechimp/HA-Hive-Local-Thermostat/releases
-[download-latest-shield]: https://img.shields.io/github/downloads/andrew-codechimp/HA-Hive-Local-Thermostat/latest/total?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/spants/HA-Hive-Local-Thermostat.svg?style=for-the-badge
+[releases-shield]: https://img.shields.io/github/release/spants/HA-Hive-Local-Thermostat.svg?style=for-the-badge
+[releases]: https://github.com/spants/HA-Hive-Local-Thermostat/releases
+[download-latest-shield]: https://img.shields.io/github/downloads/spants/HA-Hive-Local-Thermostat/latest/total?style=for-the-badge
 [hacs-installs-shield]: https://img.shields.io/endpoint.svg?url=https%3A%2F%2Flauwbier.nl%2Fhacs%2Fhive_local_thermostat&style=for-the-badge
