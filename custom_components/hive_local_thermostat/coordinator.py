@@ -525,17 +525,9 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Set HVAC mode to off."""
 
         if self.model == MODEL_SLR2:
-            payload = (
-                r'{"system_mode_heat":"off","temperature_setpoint_hold_heat":false,"occupied_heating_setpoint_heat":'
-                + str(self.heating_frost_prevention)
-                + r"}"
-            )
+            payload = r'{"system_mode_heat":"off","temperature_setpoint_hold_heat":false}'
         else:
-            payload = (
-                r'{"system_mode":"off","temperature_setpoint_hold":false,"occupied_heating_setpoint":'
-                + str(self.heating_frost_prevention)
-                + r"}"
-            )
+            payload = r'{"system_mode":"off","temperature_setpoint_hold":false}'
 
         self.hvac_mode = HVACMode.OFF
         await self._async_publish_set(payload)
