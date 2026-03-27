@@ -2,6 +2,14 @@
 
 Local Hive Thermostat MQTT integration for Home Assistant
 
+---
+
+## 🙏 A huge thank you to the original developer
+
+A massive thank you to [andrew-codechimp](https://github.com/andrew-codechimp) for creating and maintaining the original [HA-Hive-Local-Thermostat](https://github.com/andrew-codechimp/HA-Hive-Local-Thermostat) integration. This fork would not exist without their excellent work. All credit for the core integration goes to them.
+
+---
+
 ## ⚠️ This integration was forked with some patches that I need for my SLT2C system
 
 ## Instructions
