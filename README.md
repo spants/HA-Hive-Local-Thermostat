@@ -34,7 +34,7 @@ This project is not endorsed by, directly affiliated with, maintained, authorize
 
 ### HACS
 
-## Note to self: the link below opense the original - do not use
+## Note to self: the link below opens the original - do not use
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=andrew-codechimp&repository=HA-Hive-Local-Thermostat&category=Integration)
 
 Restart Home Assistant
