@@ -1,7 +1,7 @@
 """Custom integration to integrate hive_local_thermostat with Home Assistant.
 
 For more details about this integration, please refer to
-https://github.com/andrew-codechimp/HA_Hive_Local_Thermostat
+https://github.com/spants/HA-Hive-Local-Thermostat
 """
 
 from __future__ import annotations

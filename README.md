@@ -1,4 +1,4 @@
-# Hive Local Thermostat (Forked from RETIRED 2.0.8)
+# Hive Local Thermostat (Forked from RETIRED 2.0.8) - v2.1
 
 Local Hive Thermostat MQTT integration for Home Assistant
 
