@@ -2,7 +2,7 @@
 
 Local Hive Thermostat MQTT integration for Home Assistant
 
-## ⚠️ This integration was forked with some patches that I need form my SLT2C system
+## ⚠️ This integration was forked with some patches that I need for my SLT2C system
 
 ## Instructions
 
