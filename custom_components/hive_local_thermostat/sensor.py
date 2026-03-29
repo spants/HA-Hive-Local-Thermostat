@@ -136,7 +136,7 @@ class HiveSensor(HiveEntity, SensorEntity):
 
         try:
             new_value = getattr(self.coordinator, self.entity_description.key)
-        except KeyError:
+        except AttributeError:
             if self.entity_description.device_class == SensorDeviceClass.TEMPERATURE:
                 new_value = 0
             else:

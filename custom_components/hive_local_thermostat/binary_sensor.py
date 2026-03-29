@@ -100,7 +100,7 @@ class HiveBinarySensor(HiveEntity, BinarySensorEntity):
 
         try:
             new_value = getattr(self.coordinator, self.entity_description.key)
-        except KeyError:
+        except AttributeError:
             new_value = None
 
         self._attr_is_on = new_value
