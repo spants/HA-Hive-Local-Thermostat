@@ -531,12 +531,19 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def async_set_temperature(self, temperature: float) -> None:
         """Set temperature."""
 
+        # For SLR2 while user-set OFF, the device is in frost-protection HEAT mode.
+        # Sending a setpoint would cause it to start heating immediately, so only
+        # store the temperature for resume and do not publish to the device.
+        if self._user_set_off and self.model == MODEL_SLR2:
+            self._pre_off_temperature = temperature
+            return
+
         if self.model == MODEL_SLR2:
             payload = r'{"occupied_heating_setpoint_heat":' + str(temperature) + r"}"
         else:
             payload = r'{"occupied_heating_setpoint":' + str(temperature) + r"}"
 
-        # If the user changes the setpoint while off, track it as the new resume temperature
+        # If the user changes the setpoint while off (SLR1/OTR1), track it as the new resume temperature
         if self._user_set_off:
             self._pre_off_temperature = temperature
 
