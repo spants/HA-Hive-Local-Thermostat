@@ -187,7 +187,10 @@ class HiveClimateEntity(HiveEntity, ClimateEntity):
                     self._hvac_mode_set_from_temperature,
                 )
             else:
-                if self._attr_current_temperature:
+                if self.coordinator.pre_off_temperature is not None:
+                    # Use the setpoint that was stored while the thermostat was off
+                    self._attr_target_temperature = self.coordinator.pre_off_temperature
+                elif self._attr_current_temperature:
                     # Get the current temperature and round down to nearest .5
                     self._attr_target_temperature = (
                         floor((self._attr_current_temperature) * 2) / 2

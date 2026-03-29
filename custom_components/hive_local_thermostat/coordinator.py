@@ -139,6 +139,11 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Return the local temperature for heating."""
         return self.current_temperature
 
+    @property
+    def pre_off_temperature(self) -> float | None:
+        """Return the stored pre-off setpoint, if any."""
+        return self._pre_off_temperature
+
     def climate_preset(self, mode: str) -> str:
         """Get the current preset."""
         return next(
