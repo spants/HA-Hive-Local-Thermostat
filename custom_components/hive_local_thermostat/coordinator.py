@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from asyncio import sleep
 from datetime import datetime
 from typing import Any, cast
 
@@ -25,6 +24,7 @@ from .const import (
     DEFAULT_HEATING_BOOST_TEMPERATURE,
     DEFAULT_WATER_BOOST_MINUTES,
     DOMAIN,
+    FROST_PROTECTION_SETPOINT,
     HIVE_BOOST,
     LOGGER,
     MODEL_SLR2,
@@ -68,6 +68,9 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     heating_boost_temperature: float = DEFAULT_HEATING_BOOST_TEMPERATURE
     heating_frost_prevention: float = DEFAULT_FROST_TEMPERATURE
     water_boost_duration: float = DEFAULT_WATER_BOOST_MINUTES
+
+    # SLR2 pretend-off state (frost protection sent, but HA shows OFF)
+    _user_set_off: bool = False
 
     # Diagnostics
     last_mqtt_payload: dict[str, Any] | None = None
@@ -117,6 +120,8 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     @property
     def hvac_action(self) -> HVACAction | None:
         """Return the current HVAC action."""
+        if self.hvac_mode == HVACMode.OFF:
+            return HVACAction.OFF
         if self.running_state_heat == "preheating":
             return HVACAction.PREHEATING
         if self.running_state_heat == "heat":
@@ -205,6 +210,8 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                         "occupied_heating_setpoint_heat"
                     ]
                 self.preset_mode = self.climate_preset(parsed_data["system_mode_heat"])
+                if parsed_data["system_mode_heat"] == "auto":
+                    self.hvac_mode = HVACMode.AUTO
                 if parsed_data["system_mode_heat"] == "heat":
                     if (
                         parsed_data["temperature_setpoint_hold_heat"] is False
@@ -218,12 +225,19 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     self.heat_boost = True
                 if parsed_data["system_mode_heat"] == "off":
                     self.hvac_mode = HVACMode.OFF
+                if self._user_set_off:
+                    self.hvac_mode = HVACMode.OFF
 
-                if parsed_data["system_mode_heat"] != "emergency_heating":
+                if (
+                    parsed_data["system_mode_heat"] != "emergency_heating"
+                    and self.hvac_mode != HVACMode.OFF
+                ):
                     self.pre_boost_occupied_heating_setpoint_heat = (
                         self.target_temperature
                     )
                     self.pre_boost_hvac_mode = self.hvac_mode
+                if parsed_data["system_mode_water"] == "auto":
+                    self.water_mode = "auto"
                 if parsed_data["system_mode_water"] == "heat":
                     if parsed_data["temperature_setpoint_hold_water"] is False:
                         if self.show_water_schedule_mode:
@@ -261,6 +275,8 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     self.target_temperature = parsed_data["occupied_heating_setpoint"]
                 self.preset_mode = self.climate_preset(parsed_data["system_mode"])
 
+                if parsed_data["system_mode"] == "auto":
+                    self.hvac_mode = HVACMode.AUTO
                 if parsed_data["system_mode"] == "heat":
                     if (
                         parsed_data["temperature_setpoint_hold"] is False
@@ -440,7 +456,7 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def async_water_scheduled(self) -> None:
         """Send water scheduled command."""
 
-        payload = r'{"system_mode_water":"heat","temperature_setpoint_hold_water":"0","temperature_setpoint_hold_duration_water":"0"}'
+        payload = r'{"system_mode_water":"auto"}'
         await self._async_publish_set(payload)
 
     async def async_water_always_on(self) -> None:
@@ -520,45 +536,35 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Set HVAC mode to off."""
 
         if self.model == MODEL_SLR2:
-            payload = r'{"system_mode_heat":"off","temperature_setpoint_hold_heat":"0"}'
+            payload = (
+                r'{"system_mode_heat":"heat","temperature_setpoint_hold_heat":true'
+                r',"occupied_heating_setpoint_heat":'
+                + str(FROST_PROTECTION_SETPOINT)
+                + r"}"
+            )
         else:
-            payload = r'{"system_mode":"off","temperature_setpoint_hold":"0"}'
+            payload = r'{"system_mode":"off","temperature_setpoint_hold":false}'
 
+        self._user_set_off = True
         self.hvac_mode = HVACMode.OFF
-        await self._async_publish_set(payload)
-
-        await sleep(0.5)
-
-        if self.model == MODEL_SLR2:
-            payload = (
-                r'{"occupied_heating_setpoint_heat":'
-                + str(self.heating_frost_prevention)
-                + r',"temperature_setpoint_hold_heat":"1","temperature_setpoint_hold_duration_heat:"65535"}'
-            )
-        else:
-            payload = (
-                r'{"occupied_heating_setpoint":'
-                + str(self.heating_frost_prevention)
-                + r',"temperature_setpoint_hold":"1","temperature_setpoint_hold_duration:"65535"}'
-            )
-
         await self._async_publish_set(payload)
 
     async def async_set_hvac_mode_auto(self) -> None:
         """Set HVAC mode to auto."""
 
         if self.model == MODEL_SLR2:
-            payload = r'{"system_mode_heat":"heat","temperature_setpoint_hold_heat":"0","temperature_setpoint_hold_duration_heat":"0"}'
+            payload = r'{"system_mode_heat":"auto"}'
         else:
-            payload = r'{"system_mode":"heat","temperature_setpoint_hold":"0","temperature_setpoint_hold_duration":"0"}'
+            payload = r'{"system_mode":"auto"}'
 
+        self._user_set_off = False
         self.hvac_mode = HVACMode.AUTO
         await self._async_publish_set(payload)
 
     async def async_set_hvac_mode_heat(
         self,
         temperature: float,
-        set_from_temperature: bool = False,  # noqa: FBT001, FBT002
+        set_from_temperature: bool = False,  # noqa: ARG002, FBT001, FBT002
     ) -> None:
         """Set HVAC mode to heat."""
 
@@ -566,30 +572,15 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             payload = (
                 r'{"system_mode_heat":"heat","occupied_heating_setpoint_heat":'
                 + str(temperature)
-                + r',"temperature_setpoint_hold_heat":"1","temperature_setpoint_hold_duration_heat":"0"}'
-            )
-
-            payload_heating_setpoint = (
-                r'{"system_mode_heat":"heat","occupied_heating_setpoint_heat":'
-                + str(temperature)
-                + r"}"
+                + r',"temperature_setpoint_hold_heat":true,"temperature_setpoint_hold_duration_heat":0}'
             )
         else:
             payload = (
                 r'{"system_mode":"heat","occupied_heating_setpoint":'
                 + str(temperature)
-                + r',"temperature_setpoint_hold":"1","temperature_setpoint_hold_duration":"0"}'
+                + r',"temperature_setpoint_hold":true,"temperature_setpoint_hold_duration":0}'
             )
 
-            payload_heating_setpoint = (
-                r'{"system_mode":"heat","occupied_heating_setpoint":'
-                + str(temperature)
-                + r"}"
-            )
-
+        self._user_set_off = False
         self.hvac_mode = HVACMode.HEAT
         await self._async_publish_set(payload)
-
-        if not set_from_temperature:
-            await sleep(0.5)
-            await self._async_publish_set(payload_heating_setpoint)

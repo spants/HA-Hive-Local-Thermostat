@@ -19,11 +19,11 @@ requires-python = "==3.13.2"
 dependencies = [] # Use dev for all dependencies
 
 [project.urls]
-documentation = "https://github.com/andrew-codechimp/HA-Hive-Local-Thermostat"
-homepage = "https://github.com/andrew-codechimp/HA-Hive-Local-Thermostat"
-repository = "https://github.com/andrew-codechimp/HA-Hive-Local-Thermostat"
-"Bug Tracker" = "https://github.com/andrew-codechimp/HA-Hive-Local-Thermostat/issues"
-Changelog = "https://github.com/andrew-codechimp/HA-Hive-Local-Thermostat/releases"
+documentation = "https://github.com/spants/HA-Hive-Local-Thermostat"
+homepage = "https://github.com/spants/HA-Hive-Local-Thermostat"
+repository = "https://github.com/spants/HA-Hive-Local-Thermostat"
+"Bug Tracker" = "https://github.com/spants/HA-Hive-Local-Thermostat/issues"
+Changelog = "https://github.com/spants/HA-Hive-Local-Thermostat/releases"
 
 [dependency-groups]
 dev = [

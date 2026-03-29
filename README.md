@@ -1,14 +1,16 @@
-# Hive Local Thermostat (RETIRED)
+# Hive Local Thermostat (Forked from RETIRED 2.0.8) - v2.1
 
 Local Hive Thermostat MQTT integration for Home Assistant
 
-## ⚠️ This integration is retired and there will be no further updates
+---
 
-Due to moving to a new heating system I no longer have a Hive thermostat and am unable to maintain this integration.
+## 🙏 A huge thank you to the original developer
 
-I am leaving the issues open so that the community can hopefully provide support, I will not be able to make any changes and test them.
+A massive thank you to [andrew-codechimp](https://github.com/andrew-codechimp) for creating and maintaining the original [HA-Hive-Local-Thermostat](https://github.com/andrew-codechimp/HA-Hive-Local-Thermostat) integration. This fork would not exist without their excellent work. All credit for the core integration goes to them.
 
-If anyone would like to take over maintaining this integration please reach out and I will put a link to your forked repo here.
+---
+
+## ⚠️ This integration was forked with some patches that I need for my SLT2C system
 
 ## Instructions
 
@@ -32,7 +34,7 @@ Actions are provided to natively boost the Heating `hive_local_thermostat.boost_
 
 There are also matching actions to cancel the native boost for Heating `hive_local_thermostat.cancel_boost_heating` and Water `hive_local_thermostat.cancel_boost_water` (SLR2 only), these actions will return the heating/water back to the state they were before the boost.
 
-![Hive Screenshot](https://raw.githubusercontent.com/andrew-codechimp/HA-Hive-Local-Thermostat/main/images/screenshot.png "Hive Controls")
+![Hive Screenshot](https://raw.githubusercontent.com/spants/HA-Hive-Local-Thermostat/main/images/screenshot.png "Hive Controls")
 
 This project is not endorsed by, directly affiliated with, maintained, authorized, or sponsored by Hive.
 
@@ -40,7 +42,7 @@ This project is not endorsed by, directly affiliated with, maintained, authorize
 
 ### HACS
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=andrew-codechimp&repository=HA-Hive-Local-Thermostat&category=Integration)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=spants&repository=HA-Hive-Local-Thermostat&category=Integration)
 
 Restart Home Assistant
 
@@ -59,7 +61,12 @@ Installation via HACS is recommended, but a manual setup is supported.
 
 ## Climate Control Operation
 
-Ensure that you are using the climate control created by this integration, not the one that Zigbee2MQTT creates, otherwise your commands will not work correctly (to tell them apart, this integration has a preset selector for None and Boost).
+> **Important:** You must use the climate entity created by **this integration**, not the one automatically created by Zigbee2MQTT. If you use the wrong entity your commands will appear to do nothing — no MQTT messages will be sent to the device.
+>
+> - The correct entity is found under **Settings → Devices & Services → Hive Local Thermostat → your device**. Its entity ID will look like `climate.hive_receiver`.
+> - The Zigbee2MQTT discovery entity will have a name ending in `_heat` (e.g. `climate.hivereceiver_heat`) and does **not** have the preset selector for None and Boost.
+>
+> To avoid confusion, disable the Zigbee2MQTT discovery entity for your Hive receiver. In the Z2M web UI open the device, go to the **Settings** tab and turn off the **Home Assistant** toggle. Alternatively add `homeassistant: false` to the device entry in your Z2M `configuration.yaml`.
 
 The climate control provides 3 modes
 
@@ -105,13 +112,13 @@ The presets provide the facility to boost the heating. Selecting Boost will trig
   - Turn on the Pre-release toggle
   - HACS will now show updates available for pre-releases if there are any
 
-[commits-shield]: https://img.shields.io/github/commit-activity/y/andrew-codechimp/HA-Hive-Local-Thermostat.svg?style=for-the-badge
-[commits]: https://github.com/andrew-codechimp/HA-Hive-Local-Thermostat/commits/main
+[commits-shield]: https://img.shields.io/github/commit-activity/y/spants/HA-Hive-Local-Thermostat.svg?style=for-the-badge
+[commits]: https://github.com/spants/HA-Hive-Local-Thermostat/commits/main
 [hacs]: https://github.com/hacs/integration
 [hacsbadge]: https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge
 [exampleimg]: example.png
-[license-shield]: https://img.shields.io/github/license/andrew-codechimp/HA-Hive-Local-Thermostat.svg?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/andrew-codechimp/HA-Hive-Local-Thermostat.svg?style=for-the-badge
-[releases]: https://github.com/andrew-codechimp/HA-Hive-Local-Thermostat/releases
-[download-latest-shield]: https://img.shields.io/github/downloads/andrew-codechimp/HA-Hive-Local-Thermostat/latest/total?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/spants/HA-Hive-Local-Thermostat.svg?style=for-the-badge
+[releases-shield]: https://img.shields.io/github/release/spants/HA-Hive-Local-Thermostat.svg?style=for-the-badge
+[releases]: https://github.com/spants/HA-Hive-Local-Thermostat/releases
+[download-latest-shield]: https://img.shields.io/github/downloads/spants/HA-Hive-Local-Thermostat/latest/total?style=for-the-badge
 [hacs-installs-shield]: https://img.shields.io/endpoint.svg?url=https%3A%2F%2Flauwbier.nl%2Fhacs%2Fhive_local_thermostat&style=for-the-badge
