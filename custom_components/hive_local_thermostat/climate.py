@@ -181,16 +181,20 @@ class HiveClimateEntity(HiveEntity, ClimateEntity):
                 self.async_write_ha_state()
                 return
 
-            if self.coordinator.pre_boost_occupied_heating_setpoint_heat:
+            if self.coordinator.pre_off_temperature is not None:
+                # Resuming from pseudo-off: use the setpoint stored while off,
+                # taking priority over the pre-boost setpoint.
+                self._attr_target_temperature = self.coordinator.pre_off_temperature
+                await self.coordinator.async_set_hvac_mode_heat(
+                    self._attr_target_temperature, self._hvac_mode_set_from_temperature
+                )
+            elif self.coordinator.pre_boost_occupied_heating_setpoint_heat:
                 await self.coordinator.async_set_hvac_mode_heat(
                     self.coordinator.pre_boost_occupied_heating_setpoint_heat,
                     self._hvac_mode_set_from_temperature,
                 )
             else:
-                if self.coordinator.pre_off_temperature is not None:
-                    # Use the setpoint that was stored while the thermostat was off
-                    self._attr_target_temperature = self.coordinator.pre_off_temperature
-                elif self._attr_current_temperature:
+                if self._attr_current_temperature:
                     # Get the current temperature and round down to nearest .5
                     self._attr_target_temperature = (
                         floor((self._attr_current_temperature) * 2) / 2
