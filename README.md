@@ -70,7 +70,9 @@ Installation via HACS is recommended, but a manual setup is supported.
 
 The climate control provides 3 modes
 
-- Off - turns the Hive off, it will only ever heat if the temperature is below the Hive thermostats preset frost protection temperature. No schedules you have on the Hive thermostat will activate.
+- Off - turns the Hive off, it will only ever heat if the temperature is below the Hive thermostats preset frost protection temperature. No schedules you have on the Hive thermostat will activate. **My SLT2c had a problem with setting the system to off on the original code. 
+This fork operates in this way: If OFF is chosen, the current temperature is stored and the system is set to HEAT at 7 degs. When HEAT is called, the original temperature is set. If the temperature is changed in the UI while the system is OFF, the integration stores this new temperature but still pretends to be off. When HEAT is called, it will restore to the new temperature**
+   
 - Heat - turns the Hive on and will heat to the temperature specified and maintain that temperature.
 - Auto - turns the Hive to its inbuilt schedule mode, the schedules created on the Hive thermostat will be active, you can adjust the temperature either within this integration or via the Hive thermostat and it will override the temperature until the next scheduled temperature.
 
