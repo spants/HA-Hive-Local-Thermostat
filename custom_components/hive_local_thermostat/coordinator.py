@@ -68,8 +68,6 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     heating_frost_prevention: float = DEFAULT_FROST_TEMPERATURE
     water_boost_duration: float = DEFAULT_WATER_BOOST_MINUTES
 
-    # SLR2 frost-protection OFF: HA shows OFF, device holds heat at frost setpoint (snowflake)
-    _user_set_frost: bool = False
     # Temperature to restore when turning back on after a user-initiated OFF
     _pre_off_temperature: float | None = None
     # Last confirmed non-frost setpoint, used to detect SLR2 schedule-transition echoes
@@ -243,20 +241,6 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 ):
                     self._last_confirmed_setpoint = self.target_temperature
 
-                # When in frost-protection OFF, restore the pre-frost setpoint for display.
-                if self._user_set_frost and self._pre_off_temperature is not None:
-                    self.target_temperature = self._pre_off_temperature
-
-                # If the device autonomously leaves frost protection (schedule fires),
-                # clear the frost flag so HA reflects the new mode correctly.
-                if (
-                    self._user_set_frost
-                    and self.target_temperature is not None
-                    and self.target_temperature > self.heating_frost_prevention
-                    and parsed_data.get("temperature_setpoint_hold_heat") is False
-                ):
-                    self._user_set_frost = False
-
                 self.preset_mode = self.climate_preset(parsed_data["system_mode_heat"])
                 if parsed_data["system_mode_heat"] == "auto":
                     self.hvac_mode = HVACMode.AUTO
@@ -272,8 +256,6 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     self.hvac_mode = HVACMode.HEAT
                     self.heat_boost = True
                 if parsed_data["system_mode_heat"] == "off":
-                    self.hvac_mode = HVACMode.OFF
-                if self._user_set_frost:
                     self.hvac_mode = HVACMode.OFF
 
                 if (
@@ -573,12 +555,6 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def async_set_temperature(self, temperature: float) -> None:
         """Set temperature."""
 
-        # SLR2 in frost-protection mode is in heat+hold — sending a setpoint would
-        # start heating immediately. Store for resume only, don't publish.
-        if self._user_set_frost and self.model == MODEL_SLR2:
-            self._pre_off_temperature = temperature
-            return
-
         if self.model == MODEL_SLR2:
             payload = r'{"occupied_heating_setpoint_heat":' + str(temperature) + r"}"
         else:
@@ -590,22 +566,13 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Set HVAC mode to off."""
 
         if self.model == MODEL_SLR2:
-            # Frost-protection mode: keeps pipes safe and shows snowflake on SLT3c display
-            payload = (
-                r'{"system_mode_heat":"heat","temperature_setpoint_hold_heat":true'
-                r',"occupied_heating_setpoint_heat":'
-                + str(self.heating_frost_prevention)
-                + r"}"
-            )
+            payload = r'{"system_mode_heat":"off"}'
         else:
             payload = r'{"system_mode":"off","temperature_setpoint_hold":false}'
 
         # Save the current setpoint so it can be restored when turning back on
         if self.target_temperature is not None:
             self._pre_off_temperature = self.target_temperature
-        if self.model == MODEL_SLR2:
-            self._user_set_frost = True
-            self._last_confirmed_setpoint = None
         self.hvac_mode = HVACMode.OFF
         await self._async_publish_set(payload)
 
@@ -617,7 +584,6 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         else:
             payload = r'{"system_mode":"auto"}'
 
-        self._user_set_frost = False
         self.hvac_mode = HVACMode.AUTO
         await self._async_publish_set(payload)
 
@@ -641,7 +607,6 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 + r',"temperature_setpoint_hold":true,"temperature_setpoint_hold_duration":0}'
             )
 
-        self._user_set_frost = False
         self._pre_off_temperature = None
         self.hvac_mode = HVACMode.HEAT
         await self._async_publish_set(payload)
