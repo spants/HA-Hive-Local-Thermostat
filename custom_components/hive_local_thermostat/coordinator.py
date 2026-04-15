@@ -73,8 +73,9 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     _user_set_off: bool = False
     # Temperature to restore when turning back on after a user-initiated OFF
     _pre_off_temperature: float | None = None
-    # Last confirmed non-frost setpoint, used to detect SLR2 schedule-transition echoes
-    _last_confirmed_setpoint: float | None = None
+    # Last setpoint received with hold=False (genuine schedule target), used to suppress
+    # stale hold=True echoes during SLR2 schedule-period transitions.
+    _last_schedule_setpoint: float | None = None
 
     # Diagnostics
     last_mqtt_payload: dict[str, Any] | None = None
@@ -224,33 +225,31 @@ class HiveCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     self.target_temperature = self._pre_off_temperature
 
                 # Guard against SLR2 schedule-transition race condition.
-                # During a period transition, the SLR2 echoes the frost-protection
-                # setpoint (hold=True, setpoint≤frost) after publishing the real
-                # schedule setpoint. Detect and suppress this echo.
-                # Skip when user intentionally set OFF — that payload has the same
-                # signature (hold=True, frost setpoint) and must not be suppressed.
-                if (
+                # When the SLR2 transitions schedule periods it emits a burst of MQTT
+                # messages. The genuine new setpoint arrives with hold=False; stale
+                # echoes of the prior period's setpoint arrive with hold=True.
+                # Strategy: track the last hold=False setpoint as the authoritative
+                # target, and suppress any hold=True message that differs from it.
+                # This catches echoes at any temperature (7°C frost, 19°C prior
+                # setpoint, etc.) not just frost-level values.
+                # Skip suppression when the user intentionally set OFF via HA —
+                # that command also uses hold=True and must not be overridden.
+                if parsed_data.get("temperature_setpoint_hold_heat") is False:
+                    # Genuine schedule setpoint — record it as the authoritative target.
+                    self._last_schedule_setpoint = self.target_temperature
+                elif (
                     not self._user_set_off
-                    and self.target_temperature is not None
-                    and self.target_temperature <= self.heating_frost_prevention
                     and parsed_data.get("temperature_setpoint_hold_heat") is True
-                    and self._last_confirmed_setpoint is not None
-                    and self._last_confirmed_setpoint > self.heating_frost_prevention
+                    and self._last_schedule_setpoint is not None
+                    and self.target_temperature != self._last_schedule_setpoint
                 ):
                     LOGGER.warning(
-                        "Suppressing frost-protection setpoint echo during schedule "
-                        "transition (ignoring %.1f°C, retaining %.1f°C)",
+                        "Suppressing stale setpoint echo during schedule transition "
+                        "(ignoring %.1f°C, retaining %.1f°C)",
                         self.target_temperature,
-                        self._last_confirmed_setpoint,
+                        self._last_schedule_setpoint,
                     )
-                    self.target_temperature = self._last_confirmed_setpoint
-
-                # Track last confirmed non-frost setpoint for race condition detection.
-                if (
-                    self.target_temperature is not None
-                    and self.target_temperature > self.heating_frost_prevention
-                ):
-                    self._last_confirmed_setpoint = self.target_temperature
+                    self.target_temperature = self._last_schedule_setpoint
 
                 self.preset_mode = self.climate_preset(parsed_data["system_mode_heat"])
                 if parsed_data["system_mode_heat"] == "auto":
