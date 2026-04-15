@@ -139,11 +139,12 @@ class HiveClimateEntity(HiveEntity, ClimateEntity):
             self.coordinator.pre_boost_hvac_mode = None
             self.coordinator.pre_boost_occupied_heating_setpoint_heat = None
 
+        # Refresh hvac_action from coordinator before writing state to avoid stale action
+        self._attr_hvac_action = self.coordinator.hvac_action
         # Write updated temperature to HA state to avoid flapping (MQTT confirmation is slow)
         self.async_write_ha_state()
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
-        """Set the target temperature."""
         """Set the target temperature."""
         if temperature := kwargs.get(ATTR_TEMPERATURE):
             self._attr_target_temperature = temperature
@@ -156,6 +157,8 @@ class HiveClimateEntity(HiveEntity, ClimateEntity):
         if temperature:
             await self.coordinator.async_set_temperature(temperature)
 
+        # Refresh hvac_action from coordinator before writing state to avoid stale action
+        self._attr_hvac_action = self.coordinator.hvac_action
         # Write updated temperature to HA state to avoid flapping (MQTT confirmation is slow)
         self.async_write_ha_state()
 
@@ -178,6 +181,8 @@ class HiveClimateEntity(HiveEntity, ClimateEntity):
                 )
 
                 self._hvac_mode_set_from_temperature = False
+                # Refresh hvac_action from coordinator before writing state to avoid stale action
+                self._attr_hvac_action = self.coordinator.hvac_action
                 self.async_write_ha_state()
                 return
 
@@ -209,17 +214,25 @@ class HiveClimateEntity(HiveEntity, ClimateEntity):
 
         self._hvac_mode_set_from_temperature = False
 
+        # Refresh hvac_action from coordinator before writing state to avoid stale action.
+        # coordinator.hvac_action is a pure property so it reflects the just-set hvac_mode
+        # immediately (e.g. returns HVACAction.OFF when hvac_mode is OFF), preventing the
+        # brief flash of a stale action value before the MQTT echo arrives.
+        self._attr_hvac_action = self.coordinator.hvac_action
         # Write updated temperature to HA state to avoid flapping (MQTT confirmation is slow)
         self.async_write_ha_state()
 
     async def async_turn_on(self) -> None:
         """Set the HVAC State to on."""
-        assert self._attr_target_temperature is not None
-        await self.coordinator.async_set_hvac_mode_heat(self._attr_target_temperature)
+        # Delegate to async_set_hvac_mode so optimistic state updates
+        # (_attr_hvac_mode, _attr_hvac_action, async_write_ha_state) are applied
+        # consistently, regardless of how turn_on is invoked (UI, voice, automation).
+        await self.async_set_hvac_mode(HVACMode.HEAT)
 
     async def async_turn_off(self) -> None:
         """Set the HVAC State to off."""
-        await self.coordinator.async_set_hvac_mode_off()
+        # Delegate to async_set_hvac_mode for the same reason as async_turn_on.
+        await self.async_set_hvac_mode(HVACMode.OFF)
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
